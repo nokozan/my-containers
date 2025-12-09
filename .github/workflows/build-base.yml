@@ -21,8 +21,8 @@ jobs:
       - name: Build base image
         run: |
           docker build -f docker/base.Dockerfile \
-            -t ghcr.io/${{ github.repository_owner }}/aue-base:cuda118-py310 .
+            -t ghcr.io/${{ github.repository_owner }}/aue-base-large:cuda118-py310 .
 
       - name: Push base image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/aue-base:cuda118-py310
+          docker push ghcr.io/${{ github.repository_owner }}/aue-base-large:cuda118-py310

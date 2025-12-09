@@ -1,7 +1,7 @@
 # docker/stage1.base.Dockerfile
 # Text -> Image (SD/SDXL) + 배경 제거 전용 Stage1 베이스
 
-FROM ghcr.io/nokozan/aue-base:cuda117-py310
+FROM ghcr.io/nokozan/aue-base-large:cuda117-py310
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \

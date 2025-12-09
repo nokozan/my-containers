@@ -1,7 +1,7 @@
 # docker/stage2.base.Dockerfile
 # cond.png -> 3D (ICON/ECON, SMPLX, PyTorch3D 등) 전용 Stage2 베이스
 
-FROM ghcr.io/nokozan/aue-base:cuda117-py310
+FROM ghcr.io/nokozan/aue-base-large:cuda117-py310
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
