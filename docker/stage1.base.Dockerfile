@@ -17,13 +17,13 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 WORKDIR /app
 
-# 🔥 Stage1 전용 torch (필요하면 여기서 버전 바꿈)
+# 1) Stage1 전용 torch (필요하면 여기 버전만 갈아끼우면 됨)
 RUN pip install --no-cache-dir \
         torch torchvision --index-url https://download.pytorch.org/whl/cu117
 
-# Stable Diffusion / Text-to-Image 스택
+# 2) Stable Diffusion / Text-to-Image 관련 스택
 RUN pip install --no-cache-dir \
-        diffusers[torch] \
+        diffusers \
         transformers \
         accelerate \
         safetensors \
@@ -33,7 +33,7 @@ RUN pip install --no-cache-dir \
         opencv-python-headless \
         pillow
 
-# 배경 제거 / segmentation 계열
+# 3) 배경 제거 / segmentation / ControlNet 보조
 RUN pip install --no-cache-dir \
         rembg \
         segment-anything \
@@ -41,7 +41,7 @@ RUN pip install --no-cache-dir \
         kornia \
         scikit-image
 
-# 기타 유틸/디버깅용
+# 4) 기타 유틸 / 디버깅용
 RUN pip install --no-cache-dir \
         tqdm \
         matplotlib \

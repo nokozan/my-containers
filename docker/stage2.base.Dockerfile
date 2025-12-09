@@ -17,11 +17,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 WORKDIR /app
 
-# 🔥 Stage2 전용 torch (ICON/ECON 요구 버전에 맞춰 여기만 바꾸면 됨)
+# 1) Stage2 전용 torch (ICON/ECON이 요구하는 버전에 맞춰 여기만 조정)
 RUN pip install --no-cache-dir \
         torch torchvision --index-url https://download.pytorch.org/whl/cu117
 
-# 공통 3D / 수학 / 이미지 스택
+# 2) 공통 3D / 수학 / 이미지 스택
 RUN pip install --no-cache-dir \
         numpy \
         scipy \
@@ -34,7 +34,7 @@ RUN pip install --no-cache-dir \
         scikit-image \
         scikit-learn
 
-# SMPL / ICON / ECON 계열
+# 3) SMPL / ICON / ECON 계열에서 자주 쓰는 것들
 RUN pip install --no-cache-dir \
         smplx \
         chumpy \
@@ -43,11 +43,12 @@ RUN pip install --no-cache-dir \
         kornia \
         rembg
 
-# PyTorch3D (무거움) - git에서 설치
+# 4) PyTorch3D (heavy) - git에서 설치
+#    여기서 빌드/용량이 좀 무거울 수 있음. 그래도 "왠만하면 설치" 정책대로 넣어둔다.
 RUN pip install --no-cache-dir \
         "git+https://github.com/facebookresearch/pytorch3d.git"
 
-# 3D 렌더링 / 시각화
+# 5) 3D 렌더링 / 시각화
 RUN pip install --no-cache-dir \
         pyrender \
         PyOpenGL \
