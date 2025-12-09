@@ -1,0 +1,28 @@
+name: Build base image
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-push-base:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build base image
+        run: |
+          docker build -f docker/base.Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/aue-base:cuda118-py310 .
+
+      - name: Push base image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/aue-base:cuda118-py310
