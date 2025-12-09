@@ -1,8 +1,8 @@
 # docker/stage2.base.Dockerfile
-# cond.png -> 3D (ICON/ECON, SMPLX, PyTorch3D 등) 전용 Stage2 베이스
+# cond.png -> 3D (ICON/ECON, SMPLX 등) 전용 Stage2 베이스
+# torch는 한 번만, 나머지는 필요 최소 + no-deps 전략
 
 FROM ghcr.io/nokozan/aue-base-large:cuda118-py310
-
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -18,11 +18,13 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 WORKDIR /app
 
-# 1) Stage2 전용 torch (ICON/ECON이 요구하는 버전에 맞춰 여기만 조정)
+# 1) Stage2 전용 torch (CUDA 11.8용) - 딱 한 번만
 RUN pip install --no-cache-dir \
-        torch torchvision --index-url https://download.pytorch.org/whl/cu117
+        "torch==2.3.1+cu118" \
+        "torchvision==0.18.1+cu118" \
+        --index-url https://download.pytorch.org/whl/cu118
 
-# 2) 공통 3D / 수학 / 이미지 스택
+# 2) 공통 수학 / 이미지 / 3D 베이스 스택
 RUN pip install --no-cache-dir \
         numpy \
         scipy \
@@ -35,24 +37,26 @@ RUN pip install --no-cache-dir \
         scikit-image \
         scikit-learn
 
-# 3) SMPL / ICON / ECON 계열에서 자주 쓰는 것들
-RUN pip install --no-cache-dir \
+# 3) SMPL / ICON / ECON 계열 (torch 의존성 있으니 no-deps로)
+RUN pip install --no-cache-dir --no-deps \
         smplx \
-        chumpy \
         pytorch-lightning \
         einops \
-        kornia \
+        kornia
+
+# 4) 마스크/알파 작업용
+RUN pip install --no-cache-dir \
         rembg
 
-# 4) PyTorch3D (heavy) - git에서 설치
-#    여기서 빌드/용량이 좀 무거울 수 있음. 그래도 "왠만하면 설치" 정책대로 넣어둔다.
-RUN pip install --no-cache-dir \
-        "git+https://github.com/facebookresearch/pytorch3d.git"
+# 5) (옵션) PyTorch3D - 무겁고 CI 디스크 터질 수 있어서 마지막에 분리
+#    일단은 주석 처리해두고, 필요해지면 이 줄만 살려서 빌드 시도.
+# RUN pip install --no-cache-dir \
+#         "git+https://github.com/facebookresearch/pytorch3d.git"
 
-# 5) 3D 렌더링 / 시각화
-RUN pip install --no-cache-dir \
-        pyrender \
-        PyOpenGL \
-        open3d
+# 6) (옵션) 시각화/렌더링 - 필요하면 나중에 켜기
+# RUN pip install --no-cache-dir \
+#         pyrender \
+#         PyOpenGL \
+#         open3d
 
 CMD ["bash"]
