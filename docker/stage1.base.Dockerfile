@@ -1,5 +1,6 @@
 # docker/stage1.base.Dockerfile
 # Text -> Image (SD/SDXL) + 배경 제거 전용 Stage1 베이스
+# torch는 한 번만, diffusers/transformers는 --no-deps로
 
 FROM ghcr.io/nokozan/aue-base-large:cuda118-py310
 
@@ -17,34 +18,38 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 WORKDIR /app
 
-# 1) Stage1 전용 torch (필요하면 여기 버전만 갈아끼우면 됨)
+# 1) Stage1 전용 torch (CUDA 11.8용 cu118 휠) - 딱 한 번만 설치
+#    버전은 Runpod / PyTorch 조합에 맞춰 핀 해두는 게 안전함.
 RUN pip install --no-cache-dir \
-        torch torchvision --index-url https://download.pytorch.org/whl/cu117
+        "torch==2.3.1+cu118" \
+        "torchvision==0.18.1+cu118" \
+        --index-url https://download.pytorch.org/whl/cu118
 
-# 2) Stable Diffusion / Text-to-Image 관련 스택
-RUN pip install --no-cache-dir \
+# 2) SD 핵심 스택 (의존성 자동 설치 막기 위해 --no-deps)
+#    -> torch는 이미 있으니, 얘들이 건들지 못하게 만든다.
+RUN pip install --no-cache-dir --no-deps \
         diffusers \
         transformers \
-        accelerate \
+        accelerate
+
+# 3) 나머지 필수 의존성들 (이쪽은 deps 켜도 됨)
+RUN pip install --no-cache-dir \
         safetensors \
         sentencepiece \
         einops \
-        xformers \
         opencv-python-headless \
-        pillow
+        pillow \
+        tqdm
 
-# 3) 배경 제거 / segmentation / ControlNet 보조
+# 4) 배경 제거 / 이미지 처리
 RUN pip install --no-cache-dir \
         rembg \
-        segment-anything \
-        controlnet-aux \
         kornia \
         scikit-image
 
-# 4) 기타 유틸 / 디버깅용
-RUN pip install --no-cache-dir \
-        tqdm \
-        matplotlib \
-        datasets
+# (선택) 여유 생기면 아래를 나중에 추가해도 됨
+# RUN pip install --no-cache-dir \
+#         controlnet-aux \
+#         segment-anything
 
 CMD ["bash"]
