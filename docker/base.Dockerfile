@@ -1,6 +1,3 @@
-# docker/base.Dockerfile
-# 공용 CUDA + Python 베이스 (torch 없음)
-
 FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu20.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -15,19 +12,15 @@ ENV DEBIAN_FRONTEND=noninteractive \
     XDG_CACHE_HOME=/runpod-volume/.cache \
     TMPDIR=/runpod-volume/tmp
 
-# 기본 패키지 (이미 있어도 그냥 깐다)
+# ✅ 여기서는 Wonder3D에서 이미 성공했던 조합만 쓴다.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         python3 python3-pip python3-dev \
-        git wget curl ca-certificates \
-        build-essential \
+        git wget curl build-essential \
         cmake ninja-build \
         libgl1-mesa-glx libglib2.0-0 \
-        libjpeg-dev zlib1g-dev \
-        ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# python 심볼릭 링크
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 
 RUN python3 -m pip install --upgrade pip && \
