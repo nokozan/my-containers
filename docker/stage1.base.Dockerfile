@@ -36,6 +36,7 @@ RUN pip install --no-cache-dir \
     pillow \
     rembg \
     kornia \
+    onnxruntime \
     scikit-image \
     einops
 
