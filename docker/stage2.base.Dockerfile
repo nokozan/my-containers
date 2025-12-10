@@ -1,68 +1,73 @@
-# docker/stage2.base.Dockerfile
-# cond.png -> 3D (ICON/ECON, SMPLX 등) 전용 Stage2 베이스
-# torch는 한 번만, 나머지는 필요 최소 + no-deps 전략
-# ghcr.io/nokozan/aue-stage2-base-icon-econ:cuda118-py310
-
-FROM ghcr.io/nokozan/aue-base-large:cuda118-py310
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    RUNPOD_VOLUME_ROOT=/runpod-volume \
-    HF_HOME=/runpod-volume/hf \
-    HF_HUB_CACHE=/runpod-volume/hf/cache \
-    TRANSFORMERS_CACHE=/runpod-volume/hf/transformers \
-    DIFFUSERS_CACHE=/runpod-volume/hf/diffusers \
-    TORCH_HOME=/runpod-volume/torch \
-    XDG_CACHE_HOME=/runpod-volume/.cache \
-    TMPDIR=/runpod-volume/tmp
+    TZ=Etc/UTC
 
-WORKDIR /app
+# 기본 유틸 및 빌드 툴
+RUN apt-get update && apt-get install -y \
+    git wget curl ca-certificates \
+    python3 python3-pip python3-dev python3-venv \
+    build-essential \
+    libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
 
-# 1) Stage2 전용 torch (CUDA 11.8용) - 딱 한 번만
-RUN pip install --no-cache-dir \
-        "torch==2.3.1+cu118" \
-        "torchvision==0.18.1+cu118" \
-        --index-url https://download.pytorch.org/whl/cu118
+# python 심볼릭 링크
+RUN ln -sf /usr/bin/python3 /usr/bin/python \
+ && python -m pip install --upgrade pip
 
-# 2) 공통 수학 / 이미지 / 3D 베이스 스택
+# -----------------------------------------------------------------------------
+# 1) PyTorch (CUDA 11.8) - 공식 설치 가이드 기반
+# -----------------------------------------------------------------------------
+# https://pytorch.org/get-started/previous-versions/ 기준으로 CUDA 11.8 조합 사용 :contentReference[oaicite:2]{index=2}
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cu118 \
+    torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1
+
+# -----------------------------------------------------------------------------
+# 2) PyTorch3D - 공식 repo 설치 가이드
+# -----------------------------------------------------------------------------
+# https://github.com/facebookresearch/pytorch3d :contentReference[oaicite:3]{index=3}
+RUN pip install --no-cache-dir "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+
+# -----------------------------------------------------------------------------
+# 3) ECON 런타임 의존성 (공식 HF Space requirements 그대로)
+#    https://huggingface.co/spaces/Yuliang/ECON/blob/main/requirements.txt :contentReference[oaicite:4]{index=4}
+# -----------------------------------------------------------------------------
 RUN pip install --no-cache-dir \
-        numpy \
-        scipy \
-        pillow \
-        opencv-python \
-        tqdm \
-        matplotlib \
-        trimesh \
-        shapely \
-        scikit-image \
-        scikit-learn
-        
-RUN pip install --no-cache-dir \
+    matplotlib \
+    scikit-image \
+    trimesh \
+    rtree \
+    pytorch_lightning \
+    kornia \
+    chumpy \
+    opencv-python \
+    opencv-contrib-python \
+    scikit-learn \
+    protobuf \
+    pymeshlab \
+    dataclasses \
+    mediapipe \
+    einops \
     boto3 \
-    Pillow
+    tinyobjloader==2.0.0rc7 \
+    "git+https://github.com/YuliangXiu/neural_voxelization_layer.git" \
+    "git+https://github.com/YuliangXiu/rembg.git" \
+    "git+https://github.com/mmolero/pypoisson.git"
 
+# -----------------------------------------------------------------------------
+# 4) 공통 유틸 (RunPod, 기타)
+# -----------------------------------------------------------------------------
+RUN pip install --no-cache-dir runpod
 
-# 3) SMPL / ICON / ECON 계열 (torch 의존성 있으니 no-deps로)
-RUN pip install --no-cache-dir --no-deps \
-        smplx \
-        pytorch-lightning \
-        einops \
-        kornia
+# -----------------------------------------------------------------------------
+# 5) 캐시/임시 디렉토리 설정 (stage1과 패턴 맞춤)
+# -----------------------------------------------------------------------------
+ENV HF_HOME=/runpod-volume/.cache/huggingface \
+    TRANSFORMERS_CACHE=/runpod-volume/.cache/huggingface \
+    TORCH_HOME=/runpod-volume/.cache/torch \
+    MPLCONFIGDIR=/tmp/matplotlib
 
-# 4) 마스크/알파 작업용
-RUN pip install --no-cache-dir \
-        rembg
-
-# 5) (옵션) PyTorch3D - 무겁고 CI 디스크 터질 수 있어서 마지막에 분리
-#    일단은 주석 처리해두고, 필요해지면 이 줄만 살려서 빌드 시도.
-# RUN pip install --no-cache-dir \
-#         "git+https://github.com/facebookresearch/pytorch3d.git"
-
-# 6) (옵션) 시각화/렌더링 - 필요하면 나중에 켜기
-# RUN pip install --no-cache-dir \
-#         pyrender \
-#         PyOpenGL \
-#         open3d
-
+RUN mkdir -p /runpod-volume/.cache/huggingface \
+             /runpod-volume/.cache/torch \
+             /tmp/outputs
 CMD ["bash"]
