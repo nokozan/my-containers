@@ -36,6 +36,11 @@ RUN pip install --no-cache-dir \
         shapely \
         scikit-image \
         scikit-learn
+        
+RUN pip install --no-cache-dir \
+    boto3 \
+    Pillow
+
 
 # 3) SMPL / ICON / ECON 계열 (torch 의존성 있으니 no-deps로)
 RUN pip install --no-cache-dir --no-deps \
