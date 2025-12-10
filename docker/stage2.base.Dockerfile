@@ -1,6 +1,7 @@
 # docker/stage2.base.Dockerfile
 # cond.png -> 3D (ICON/ECON, SMPLX 등) 전용 Stage2 베이스
 # torch는 한 번만, 나머지는 필요 최소 + no-deps 전략
+# ghcr.io/nokozan/aue-stage2-base-icon-econ:cuda118-py310
 
 FROM ghcr.io/nokozan/aue-base-large:cuda118-py310
 

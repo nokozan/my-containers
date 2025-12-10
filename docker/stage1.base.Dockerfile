@@ -1,3 +1,5 @@
+# ghcr.io/nokozan/aue-stage1-base-sd:cuda118-py310
+
 FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -15,12 +17,28 @@ RUN pip install --no-cache-dir \
     --index-url https://download.pytorch.org/whl/cu118
 
 # diffusers + transformers + tokenizers (필수)
+# RUN pip install --no-cache-dir \
+#     diffusers==0.30.0 \
+#     transformers==4.40.0 \
+#     tokenizers==0.19.1 \
+#     accelerate==0.29.3 \
+#     safetensors==0.4.2
+
 RUN pip install --no-cache-dir \
     diffusers==0.30.0 \
     transformers==4.40.0 \
-    tokenizers==0.15.2 \
+    tokenizers==0.19.1 \
     accelerate==0.29.3 \
-    safetensors==0.4.2
+    safetensors==0.4.2 \
+    regex \
+    sentencepiece \
+    opencv-python-headless \
+    pillow \
+    rembg \
+    kornia \
+    scikit-image \
+    einops
+
 
 # stage1 유틸
 RUN pip install --no-cache-dir \
