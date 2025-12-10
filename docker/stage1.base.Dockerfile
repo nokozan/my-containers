@@ -31,8 +31,11 @@ RUN pip install --no-cache-dir --no-deps \
         diffusers \
         transformers \
         accelerate
-        
-RUN pip install --no-cache-dir huggingface-hub
+
+RUN pip install --no-cache-dir \
+    huggingface-hub \
+    safetensors
+
 
 # 3) 나머지 필수 의존성들 (이쪽은 deps 켜도 됨)
 RUN pip install --no-cache-dir \
