@@ -21,8 +21,8 @@ jobs:
       - name: Build stage2 base image
         run: |
           docker build -f docker/stage2.base.Dockerfile \
-            -t ghcr.io/${{ github.repository_owner }}/aue-stage2-base:cuda118-py310 .
+            -t ghcr.io/${{ github.repository_owner }}/aue-stage2-base-icon-econ:cuda118-py310 .
 
       - name: Push stage2 base image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/aue-stage2-base:cuda118-py310
+          docker push ghcr.io/${{ github.repository_owner }}/aue-stage2-base-icon-econ:cuda118-py310
