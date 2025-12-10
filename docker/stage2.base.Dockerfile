@@ -33,6 +33,7 @@ RUN pip install --no-cache-dir --no-build-isolation \
 # -----------------------------------------------------------------------------
 # 3) ICON/ECON 공통 의존성 (ECON requirements 기반)
 # -----------------------------------------------------------------------------
+# 1단계: 일반 PyPI 패키지 먼저
 RUN pip install --no-cache-dir \
     matplotlib \
     scikit-image \
@@ -50,10 +51,14 @@ RUN pip install --no-cache-dir \
     mediapipe \
     einops \
     boto3 \
-    tinyobjloader==2.0.0rc7 \
+    tinyobjloader==2.0.0rc7
+
+# 2단계: torch 의존하는 git 패키지들은 torch 설치 이후 + build isolation 끄고 설치
+RUN pip install --no-cache-dir --no-build-isolation \
     "git+https://github.com/YuliangXiu/neural_voxelization_layer.git" \
     "git+https://github.com/YuliangXiu/rembg.git" \
     "git+https://github.com/mmolero/pypoisson.git"
+
 
 # -----------------------------------------------------------------------------
 # 4) RunPod 등 공통 유틸
