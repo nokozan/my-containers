@@ -90,7 +90,12 @@ RUN pip install --no-cache-dir \
 
 # 4-1 nvdiffrast (NVLabs 공식 방식)
 # 4-1 nvdiffrast (NVLabs 공식 방식, torch 이미 설치된 전역 env 사용)
-RUN pip install --no-build-isolation --no-cache-dir \
+# 4-1 nvdiffrast (NVLabs 공식 방식, CUDA arch 수동 지정)
+# A10 / 30xx / 40xx 대충 커버하는 아키텍처 세트
+ENV TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6"
+
+RUN TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}" \
+    pip install --no-build-isolation --no-cache-dir \
     "git+https://github.com/NVlabs/nvdiffrast.git"
 
 
