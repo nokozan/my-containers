@@ -1,3 +1,4 @@
+# ghcr.io/nokozan/aue-base-large:cuda118-py310
 FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu20.04
 
 ENV DEBIAN_FRONTEND=noninteractive \

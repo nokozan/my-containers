@@ -57,6 +57,19 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir \
         rembg
 
+        # ECON (ICON/ECON) 공식 requirements에서 빠져있던 것들 보완
+RUN pip install --no-cache-dir \
+        rtree \
+        pytorch_lightning \
+        chumpy \
+        opencv_contrib_python \
+        protobuf \
+        dataclasses \
+        mediapipe \
+        tinyobjloader==2.0.0rc7 \
+        "git+https://github.com/YuliangXiu/neural_voxelization_layer.git" \
+        "git+https://github.com/mmolero/pypoisson.git"
+
 # 5) (옵션) PyTorch3D - 무겁고 CI 디스크 터질 수 있어서 마지막에 분리
 #    일단은 주석 처리해두고, 필요해지면 이 줄만 살려서 빌드 시도.
 RUN pip install --no-cache-dir \
