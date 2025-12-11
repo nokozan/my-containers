@@ -1,7 +1,8 @@
-# docker/stage2.base.Dockerfile
-# cond.png -> 3D (ICON/ECON, SMPLX 등) 전용 Stage2 베이스
-# torch는 한 번만, 나머지는 필요 최소 + no-deps 전략
-# ghcr.io/nokozan/aue-stage2-base-icon-econ:cuda118-py310
+# docker/stage2.base.unique3d_triposr.Dockerfile
+# cond.png -> 3D (Unique3D + TripoSR) 전용 Stage2 베이스
+# Unique3D 환경을 기준으로 고정하고, TripoSR은 "추가 의존성만" 설치
+# FROM: 기존 공통 베이스 유지
+#   ghcr.io/nokozan/aue-base-large:cuda118-py310
 
 FROM ghcr.io/nokozan/aue-base-large:cuda118-py310
 
@@ -19,50 +20,70 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 WORKDIR /app
 
-# 1) Stage2 전용 torch (CUDA 11.8용) - 딱 한 번만
+# ------------------------------------------------------
+# 1) 시스템 패키지 (렌더링/빌드 공통)
+# ------------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        ffmpeg \
+        libgl1-mesa-glx \
+        libglib2.0-0 \
+        libx11-6 \
+        libxcb1 \
+        libxext6 \
+        libxrender1 \
+        build-essential \
+        pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# torch는 base 이미지(aue-base-large)에서 이미 설치되어 있다고 가정.
+# 여기서 재설치해서 버전 꼬지 않도록 torch는 건드리지 않는다.
+# (기대값: torch==2.1.0+cu118)
+
+# ------------------------------------------------------
+# 2) Unique3D 코어 의존성 (requirements-detail 기준)
+#    -> 여기 버전이 "거의 진실"이므로 이쪽을 기준으로 잠근다.
+# ------------------------------------------------------
 RUN pip install --no-cache-dir \
-        "torch==2.3.1+cu118" \
-        "torchvision==0.18.1+cu118" \
-        --index-url https://download.pytorch.org/whl/cu118
+        "ninja" \
+        "diffusers==0.27.2" \
+        "transformers==4.39.3" \
+        "accelerate==0.29.2" \
+        "onnxruntime-gpu==1.17.0" \
+        "pytorch3d==0.7.5" \
+        "rembg==2.0.56" \
+        "trimesh==4.3.0" \
+        "Pillow==10.3.0" \
+        "omegaconf==2.3.0"
 
-# 2) 공통 수학 / 이미지 / 3D 베이스 스택
-RUN pip install --no-cache-dir \
-        numpy \
-        scipy \
-        pillow \
-        opencv-python \
-        tqdm \
-        matplotlib \
-        trimesh \
-        shapely \
-        scikit-image \
-        scikit-learn
-        
-RUN pip install --no-cache-dir \
-    boto3 \
-    Pillow
-
-
-# 3) SMPL / ICON / ECON 계열 (torch 의존성 있으니 no-deps로)
-RUN pip install --no-cache-dir --no-deps \
-    smplx \
-    einops \
-    kornia
-
-RUN pip install --no-cache-dir \
-    pytorch-lightning
-
-
-# 4) 마스크/알파 작업용
-RUN pip install --no-cache-dir \
-        rembg
-
-# 5) (옵션) PyTorch3D - 무겁고 CI 디스크 터질 수 있어서 마지막에 분리
-#    일단은 주석 처리해두고, 필요해지면 이 줄만 살려서 빌드 시도.
+# 필요 시 Unique3D에서 쓰는 기타 패키지(예: opencv-python 등)는
+# requirements-detail과 맞춰서 여기에 추가하면 된다.
+# 예:
 # RUN pip install --no-cache-dir \
-#         "git+https://github.com/facebookresearch/pytorch3d.git"
+#         "opencv-python" \
+#         "scipy"
 
-# 6) (옵션) 시각화/렌더링 - 필요하면 나중에 켜기
+# ------------------------------------------------------
+# 3) TripoSR 전용 의존성 - Unique3D에 "없는 것만" 설치
+#    TripoSR requirements.txt 기준으로, 겹치는 애들은 *절대* 다시 설치하지 않는다.
+#    (transformers, Pillow, trimesh, rembg 등은 위에서 잠근 버전 사용)
+# ------------------------------------------------------
+RUN pip install --no-cache-dir \
+        "einops==0.7.0" \
+        "xatlas==0.0.9" \
+        "moderngl==5.10.0" \
+        "imageio[ffmpeg]" \
+        "huggingface-hub" \
+    && pip install --no-cache-dir \
+        "git+https://github.com/tatsy/torchmcubes.git"
+
+# gradio 같은 UI용은 Stage2 서비스 레벨에서 필요할 때만 얇게 추가
+# (여기서는 공통 코어 환경만 유지)
+
+# ------------------------------------------------------
+# 4) (옵션) 시각화 / 렌더링 유틸
+#    필요 없으면 주석 처리해도 됨.
+# ------------------------------------------------------
 RUN pip install --no-cache-dir \
         pyrender \
         PyOpenGL \
