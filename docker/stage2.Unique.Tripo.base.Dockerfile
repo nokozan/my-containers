@@ -50,11 +50,13 @@ RUN pip install --no-cache-dir \
         "transformers==4.39.3" \
         "accelerate==0.29.2" \
         "onnxruntime-gpu==1.17.0" \
-        "pytorch3d==0.7.5" \
         "rembg==2.0.56" \
         "trimesh==4.3.0" \
         "Pillow==10.3.0" \
-        "omegaconf==2.3.0"
+        "omegaconf==2.3.0" \
+    && pip install --no-cache-dir \
+        "git+https://github.com/facebookresearch/pytorch3d.git@v0.7.5"
+
 
 # 필요 시 Unique3D에서 쓰는 기타 패키지(예: opencv-python 등)는
 # requirements-detail과 맞춰서 여기에 추가하면 된다.
