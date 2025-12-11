@@ -47,12 +47,21 @@ RUN pip install --no-cache-dir \
         "transformers==4.39.3" \
         "accelerate==0.29.2" \
         "onnxruntime-gpu==1.17.0" \
-        "pytorch3d==0.7.5" \
         "rembg==2.0.56" \
         "trimesh==4.3.0" \
         "Pillow==10.3.0" \
         "omegaconf==2.3.0" \
         "huggingface-hub==0.25.2"
+# pytorch3d 0.7.5는 현재 환경(PyTorch / CUDA 조합)에 맞는 wheel이 없어서
+# 공식 가이드대로 git 소스에서 직접 빌드 설치한다.  :contentReference[oaicite:1]{index=1}
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        build-essential \
+        cmake \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir \
+        "git+https://github.com/facebookresearch/pytorch3d.git@v0.7.5"
+
 
 # 필요하면 Unique3D쪽 나머지 패키지 추가
 RUN pip install --no-cache-dir \

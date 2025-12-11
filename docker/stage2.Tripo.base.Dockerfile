@@ -23,12 +23,14 @@ RUN mkdir -p \
     /runpod-volume/models/triposr
 
 # ------------------------------------------------------
-# 1) Python 3.10 + 기본 도구
+# 1) Python 3.10 + 빌드 툴 + pip
 # ------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3.10 \
         python3.10-distutils \
         python3.10-venv \
+        python3.10-dev \
+        python3-pip \
         git \
         curl \
         ffmpeg \
@@ -40,37 +42,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxrender1 \
         build-essential \
         pkg-config \
+        cmake \
+        ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
+RUN python3.10 -m pip install --upgrade pip setuptools wheel
+
+# python 명령을 python3.10 으로 고정 (선택)
 RUN ln -sf /usr/bin/python3.10 /usr/bin/python
-
-# RUN python -m ensurepip && \
-#     python -m pip install --upgrade pip setuptools wheel
-# pip 설치 + 업그레이드 (Ubuntu / NGC 방식)
-# pip 세팅 (ensurepip 쓰지 말고 apt + python3.10 기준으로)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        python3.10 \
-        python3.10-distutils \
-        python3-pip && \
-    rm -rf /var/lib/apt/lists/* && \
-    python3.10 -m pip install --upgrade pip setuptools wheel
-
 
 WORKDIR /app
 
 # ------------------------------------------------------
-# 2) PyTorch (CUDA 11.8) - 공식 가이드대로 설치 :contentReference[oaicite:3]{index=3}
+# 2) PyTorch (CUDA 11.8) - TripoSR 가이드 근처 조합
 # ------------------------------------------------------
 RUN pip install --no-cache-dir \
     "torch==2.1.0" "torchvision==0.16.0" "torchaudio==2.1.0" \
     --index-url https://download.pytorch.org/whl/cu118
 
 # ------------------------------------------------------
-# 3) TripoSR requirements.txt + torchmcubes
-#    (공식 repo requirements 기준) :contentReference[oaicite:4]{index=4}
+# 3) TripoSR 의존성 + torchmcubes
+#    (TripoSR requirements.txt 기준 축약본)
 # ------------------------------------------------------
-# 핵심 파이썬 의존성
 RUN pip install --no-cache-dir \
     "omegaconf==2.3.0" \
     "Pillow==10.1.0" \
@@ -84,7 +77,7 @@ RUN pip install --no-cache-dir \
     "moderngl==5.10.0" \
     "gradio"
 
-# torchmcubes (이제 Py>=3.9라 설치 가능)
+# torchmcubes (이제 Py>=3.9라 설치 가능, 위에서 cmake/ninja/python-dev 준비됨)
 RUN pip install --no-cache-dir \
     "git+https://github.com/tatsy/torchmcubes.git"
 
