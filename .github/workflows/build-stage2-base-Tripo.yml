@@ -1,4 +1,4 @@
-name: Build stage2 base Unique.Tripo image
+name: Build stage2 base Tripo image
 
 on:
   workflow_dispatch:
@@ -18,11 +18,11 @@ jobs:
       - name: Login to GHCR
         run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Build stage2 base Unique.Tripo image
+      - name: Build stage2 base Tripo image
         run: |
-          docker build -f docker/stage2.Unique.Tripo.base.Dockerfile \
-            -t ghcr.io/${{ github.repository_owner }}/aue-stage2-base-unique3d-triposr:cuda118-py310 .
+          docker build -f docker/stage2.Tripo.base.Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/aue-stage2-base-tripo:cuda118-py310 .
 
       - name: Push stage2 base image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/aue-stage2-base-unique3d-triposr:cuda118-py310
+          docker push ghcr.io/${{ github.repository_owner }}/aue-stage2-base-tripo:cuda118-py310
