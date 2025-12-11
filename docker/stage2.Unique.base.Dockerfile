@@ -100,8 +100,10 @@ RUN TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}" \
 
 
 # 4-2 pytorch3d (v0.7.8: PyTorch 2.1~2.4 공식 지원)
+# 4-2 pytorch3d (V0.7.8: PyTorch 2.1~2.4 공식 지원)
 RUN pip install --no-cache-dir \
-    "git+https://github.com/facebookresearch/pytorch3d.git@v0.7.8"
+    "git+https://github.com/facebookresearch/pytorch3d.git@V0.7.8"
+
 
 # 4-3 torch_scatter (PyTorch 2.4.x + cu118 호환 wheel)
 RUN pip install --no-cache-dir \
