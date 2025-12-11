@@ -89,8 +89,10 @@ RUN pip install --no-cache-dir \
 # ----------------------------------------------------------
 
 # 4-1 nvdiffrast (NVLabs 공식 방식)
-RUN pip install --no-cache-dir \
+# 4-1 nvdiffrast (NVLabs 공식 방식, torch 이미 설치된 전역 env 사용)
+RUN pip install --no-build-isolation --no-cache-dir \
     "git+https://github.com/NVlabs/nvdiffrast.git"
+
 
 # 4-2 pytorch3d (v0.7.8: PyTorch 2.1~2.4 공식 지원)
 RUN pip install --no-cache-dir \
