@@ -1,73 +1,105 @@
-# docker/stage2.unique.base.Dockerfile
-# Unique3D 전용 Stage2 베이스 (공식 스펙 맞춘 버전)
+# ==========================================================
+# Unique3D 전용 Stage2 Base (CUDA 11.7 / Python 3.8 / torch 2.4.1)
+# ==========================================================
 
-FROM nvcr.io/nvidia/pytorch:23.10-py3
+FROM ghcr.io/nokozan/aue-base-large:cuda118-py310
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     RUNPOD_VOLUME_ROOT=/runpod-volume \
-    HF_HOME=/runpod-volume/.cache/hf \
-    HF_HUB_CACHE=/runpod-volume/.cache/hf \
-    TRANSFORMERS_CACHE=/runpod-volume/.cache/hf \
-    DIFFUSERS_CACHE=/runpod-volume/.cache/diffusers \
-    TORCH_HOME=/runpod-volume/.cache/torch \
+    HF_HOME=/runpod-volume/hf \
+    HF_HUB_CACHE=/runpod-volume/hf/cache \
+    TRANSFORMERS_CACHE=/runpod-volume/hf/transformers \
+    DIFFUSERS_CACHE=/runpod-volume/hf/diffusers \
+    TORCH_HOME=/runpod-volume/torch \
     XDG_CACHE_HOME=/runpod-volume/.cache \
     TMPDIR=/runpod-volume/tmp \
     UNIQUE3D_MODEL_DIR=/runpod-volume/models/unique3d
 
 RUN mkdir -p \
-    /runpod-volume/.cache/hf \
-    /runpod-volume/.cache/diffusers \
-    /runpod-volume/.cache/torch \
+    /runpod-volume/hf/cache \
+    /runpod-volume/hf/transformers \
+    /runpod-volume/hf/diffusers \
+    /runpod-volume/torch \
     /runpod-volume/tmp \
     /runpod-volume/models/unique3d
 
-WORKDIR /app
-
-# 시스템 패키지
+# ----------------------------------------------------------
+# 1. 시스템 패키지
+# ----------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         ffmpeg \
-        libgl1-mesa-glx \
-        libglib2.0-0 \
-        libx11-6 \
-        libxcb1 \
-        libxext6 \
-        libxrender1 \
-        build-essential \
-        pkg-config \
-    && rm -rf /var/lib/apt/lists/*
-
-# 이 이미지 안에는 이미 torch 2.1.0+cu121 이 깔려 있으므로
-# torch는 건드리지 말고 Unique3D requirements-detail.txt 기반 패키지만 설치
-RUN pip install --no-cache-dir \
-        "ninja" \
-        "diffusers==0.27.2" \
-        "transformers==4.39.3" \
-        "accelerate==0.29.2" \
-        "onnxruntime-gpu==1.17.0" \
-        "rembg==2.0.56" \
-        "trimesh==4.3.0" \
-        "Pillow==10.3.0" \
-        "omegaconf==2.3.0" \
-        "huggingface-hub==0.25.2"
-
-# pytorch3d 0.7.5는 현재 환경(Py3.8 + torch/cu118)에 맞는 wheel이 없어서
-# 공식 repo의 v0.7.5 태그에서 소스를 빌드해서 설치한다.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        git \
+        libgl1-mesa-glx libglib2.0-0 \
         build-essential \
         cmake \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir \
-        "git+https://github.com/facebookresearch/pytorch3d.git@v0.7.5"
+        pkg-config \
+        wget \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
 
 
-# 필요하면 Unique3D쪽 나머지 패키지 추가
+# ----------------------------------------------------------
+# 2. PyTorch 2.4.1 + cu118 설치  (이 베이스에 torch 없는 경우 필요)
+#    이미 stage1 등에서 설치되어 있을 수 있으므로 무조건 재설치 허용
+# ----------------------------------------------------------
 RUN pip install --no-cache-dir \
-        "opencv-python" \
-        "pymeshlab==2023.12.post1" \
-        "pygltflib==1.16.2"
+    torch==2.4.1+cu118 \
+    torchvision==0.19.1+cu118 \
+    torchaudio==2.4.1 \
+    --index-url https://download.pytorch.org/whl/cu118
+
+
+# ----------------------------------------------------------
+# 3. 기본 Python 패키지 — Unique3D 환경 기반 + 네가 요청한 목록 포함
+# ----------------------------------------------------------
+RUN pip install --no-cache-dir \
+        accelerate==0.29.2 \
+        datasets \
+        "diffusers>=0.26.3" \
+        fire \
+        gradio \
+        jaxtyping \
+        numba \
+        numpy \
+        "omegaconf>=2.3.0" \
+        onnxruntime-gpu \
+        opencv-python \
+        opencv-python-headless \
+        ort_nightly_gpu \
+        peft \
+        Pillow \
+        pygltflib \
+        "pymeshlab>=2023.12" \
+        "rembg[gpu]" \
+        tqdm \
+        transformers \
+        trimesh \
+        typeguard \
+        wandb \
+        xformers \
+        ninja \
+        huggingface-hub
+
+
+# ----------------------------------------------------------
+# 4. 확장 3D 모듈 (빌드 필요)
+# ----------------------------------------------------------
+
+# 4-1 nvdiffrast (NVLabs 공식 방식)
+RUN pip install --no-cache-dir \
+    "git+https://github.com/NVlabs/nvdiffrast.git"
+
+# 4-2 pytorch3d (v0.7.8: PyTorch 2.1~2.4 공식 지원)
+RUN pip install --no-cache-dir \
+    "git+https://github.com/facebookresearch/pytorch3d.git@v0.7.8"
+
+# 4-3 torch_scatter (PyTorch 2.4.x + cu118 호환 wheel)
+RUN pip install --no-cache-dir \
+    torch_scatter \
+    -f https://data.pyg.org/whl/torch-2.4.0+cu118.html
+
 
 CMD ["bash"]
