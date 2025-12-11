@@ -70,14 +70,14 @@ RUN pip install --no-cache-dir \
 #    TripoSR requirements.txt 기준으로, 겹치는 애들은 *절대* 다시 설치하지 않는다.
 #    (transformers, Pillow, trimesh, rembg 등은 위에서 잠근 버전 사용)
 # ------------------------------------------------------
+# TripoSR 쪽 공통 파이썬 의존성만 설치 (torchmcubes는 Python>=3.9 요구라 현재 base(Py3.8)에서는 설치 불가)
 RUN pip install --no-cache-dir \
         "einops==0.7.0" \
         "xatlas==0.0.9" \
         "moderngl==5.10.0" \
         "imageio[ffmpeg]" \
-        "huggingface-hub" \
-    && pip install --no-cache-dir \
-        "git+https://github.com/tatsy/torchmcubes.git"
+        "huggingface-hub"
+
 
 # gradio 같은 UI용은 Stage2 서비스 레벨에서 필요할 때만 얇게 추가
 # (여기서는 공통 코어 환경만 유지)
