@@ -44,8 +44,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN ln -sf /usr/bin/python3.10 /usr/bin/python
 
-RUN python -m ensurepip && \
-    python -m pip install --upgrade pip setuptools wheel
+# RUN python -m ensurepip && \
+#     python -m pip install --upgrade pip setuptools wheel
+# pip 설치 + 업그레이드 (Ubuntu / NGC 방식)
+# pip 세팅 (ensurepip 쓰지 말고 apt + python3.10 기준으로)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3.10 \
+        python3.10-distutils \
+        python3-pip && \
+    rm -rf /var/lib/apt/lists/* && \
+    python3.10 -m pip install --upgrade pip setuptools wheel
+
 
 WORKDIR /app
 
