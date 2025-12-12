@@ -85,11 +85,11 @@ RUN python -m pip install --no-cache-dir \
 # ----------------------------------------------------------
 # 6) TensorRT (문서 그대로)
 # ----------------------------------------------------------
-RUN python -m pip install --no-cache-dir tensorrt==8.6.0
+# RUN python -m pip install --no-cache-dir tensorrt==8.6.0
 
 # 문서의 .bashrc 대신, 컨테이너 환경변수로 고정 (런타임 컨테이너에서도 상속되게)
 # (site-packages 경로는 배포마다 달라질 수 있어 흔한 후보들을 같이 넣음)
-ENV LD_LIBRARY_PATH=/usr/local/cuda/targets/x86_64-linux/lib/:/usr/local/lib/python3.10/dist-packages/tensorrt:/usr/lib/python3/dist-packages/tensorrt:${LD_LIBRARY_PATH}
+# ENV LD_LIBRARY_PATH=/usr/local/cuda/targets/x86_64-linux/lib/:/usr/local/lib/python3.10/dist-packages/tensorrt:/usr/lib/python3/dist-packages/tensorrt:${LD_LIBRARY_PATH}
 
 # ----------------------------------------------------------
 # 7) torch_scatter (prebuilt wheel)
