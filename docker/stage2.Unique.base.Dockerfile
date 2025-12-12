@@ -43,6 +43,7 @@ RUN python -m pip install --no-cache-dir ninja
 # ----------------------------------------------------------
 # 4) Unique3D pinned deps (onnxruntime*, torch_scatter, pytorch3d 제외)
 # ----------------------------------------------------------
+# (핀 deps 설치 블록에서 nvdiffrast 제거)
 RUN python -m pip install --no-cache-dir \
     accelerate==0.29.2 \
     datasets==2.18.0 \
@@ -52,7 +53,6 @@ RUN python -m pip install --no-cache-dir \
     jaxtyping==0.2.29 \
     numba==0.59.1 \
     numpy==1.26.4 \
-    nvdiffrast==0.3.1 \
     omegaconf==2.3.0 \
     opencv_python==4.9.0.80 \
     opencv_python_headless==4.9.0.80 \
@@ -66,6 +66,11 @@ RUN python -m pip install --no-cache-dir \
     trimesh==4.3.0 \
     typeguard==2.13.3 \
     wandb==0.16.6
+
+# nvdiffrast는 소스로 설치 (v0.3.1 고정)
+RUN python -m pip install --no-cache-dir \
+    "git+https://github.com/NVlabs/nvdiffrast.git@v0.3.1"
+
 
 # ----------------------------------------------------------
 # 5) ONNX Runtime (문서 그대로: CUDA12 인덱스 사용 / CPU onnxruntime 설치 금지)
