@@ -1,117 +1,112 @@
-# ==========================================================
-# Unique3D 전용 Stage2 Base (CUDA 11.7 / Python 3.8 / torch 2.4.1)
-# ==========================================================
-
-FROM ghcr.io/nokozan/aue-base-large:cuda118-py310
+FROM nvidia/cuda:12.2.2-cudnn8-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    RUNPOD_VOLUME_ROOT=/runpod-volume \
-    HF_HOME=/runpod-volume/hf \
-    HF_HUB_CACHE=/runpod-volume/hf/cache \
-    TRANSFORMERS_CACHE=/runpod-volume/hf/transformers \
-    DIFFUSERS_CACHE=/runpod-volume/hf/diffusers \
-    TORCH_HOME=/runpod-volume/torch \
-    XDG_CACHE_HOME=/runpod-volume/.cache \
-    TMPDIR=/runpod-volume/tmp \
-    UNIQUE3D_MODEL_DIR=/runpod-volume/models/unique3d
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    CUDA_HOME=/usr/local/cuda \
+    FORCE_CUDA=1 \
+    # tensorrt pip이 추가 인덱스를 요구하는 경우가 있어 미리 고정
+    PIP_EXTRA_INDEX_URL=https://pypi.nvidia.com
 
-RUN mkdir -p \
-    /runpod-volume/hf/cache \
-    /runpod-volume/hf/transformers \
-    /runpod-volume/hf/diffusers \
-    /runpod-volume/torch \
-    /runpod-volume/tmp \
-    /runpod-volume/models/unique3d
+WORKDIR /opt
 
 # ----------------------------------------------------------
-# 1. 시스템 패키지
+# 1) OS deps (python3.10 + build/runtime)
 # ----------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git \
-        ffmpeg \
-        libgl1-mesa-glx libglib2.0-0 \
-        build-essential \
-        cmake \
-        pkg-config \
-        wget \
-    && rm -rf /var/lib/apt/lists/*
+    python3.10 python3.10-dev python3-pip \
+    git curl ca-certificates \
+    build-essential cmake pkg-config \
+    ninja-build \
+    libgl1 libglib2.0-0 \
+    ffmpeg \
+ && ln -sf /usr/bin/python3.10 /usr/bin/python \
+ && python -m pip install --upgrade pip setuptools wheel \
+ && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
-
-
-# ----------------------------------------------------------
-# 2. PyTorch 2.4.1 + cu118 설치  (이 베이스에 torch 없는 경우 필요)
-#    이미 stage1 등에서 설치되어 있을 수 있으므로 무조건 재설치 허용
-# ----------------------------------------------------------
-RUN pip install --no-cache-dir \
-    torch==2.4.1+cu118 \
-    torchvision==0.19.1+cu118 \
-    torchaudio==2.4.1 \
-    --index-url https://download.pytorch.org/whl/cu118
-
+RUN python -V && pip -V && nvcc --version && echo "CUDA_HOME=${CUDA_HOME}"
 
 # ----------------------------------------------------------
-# 3. 기본 Python 패키지 — Unique3D 환경 기반 + 네가 요청한 목록 포함
+# 2) Torch (네가 준 고정 버전 그대로)
 # ----------------------------------------------------------
-RUN pip install --no-cache-dir \
-        accelerate==0.29.2 \
-        datasets==2.18.0 \
-        diffusers==0.27.2 \
-        fire==0.6.0 \
-        gradio==4.32.0 \
-        jaxtyping==0.2.29 \
-        numba==0.59.1 \
-        numpy==1.26.4 \
-        nvdiffrast==0.3.1 \
-        omegaconf==2.3.0 \
-        onnxruntime-gpu==1.17.0 \
-        opencv-python==4.9.0.80 \
-        opencv-python-headless==4.9.0.80 \
-        ort_nightly_gpu==1.17.0.dev20240118002 \
-        peft==0.10.0 \
-        Pillow==10.3.0 \
-        pygltflib==1.16.2 \
-        pymeshlab==2023.12.post1 \
-        rembg==2.0.56 \
-        torch_scatter==2.1.2 \
-        tqdm==4.64.1 \
-        transformers==4.39.3 \
-        trimesh==4.3.0 \
-        typeguard==2.13.3 \
-        wandb==0.16.6 \
-        xformers \
-        ninja \
-        huggingface-hub
+RUN python -m pip install --no-cache-dir \
+    "torch==2.1.0+cu121" \
+    --index-url https://download.pytorch.org/whl/cu121
 
-
+RUN python -c "import torch; print('torch', torch.__version__, 'cuda', torch.version.cuda)"
 
 # ----------------------------------------------------------
-# 4. 확장 3D 모듈 (빌드 필요)
+# 3) 문서: ninja는 pip로도 설치 권장
 # ----------------------------------------------------------
+RUN python -m pip install --no-cache-dir ninja
 
-# 4-1 nvdiffrast (NVLabs 공식 방식)
-# 4-1 nvdiffrast (NVLabs 공식 방식, torch 이미 설치된 전역 env 사용)
-# 4-1 nvdiffrast (NVLabs 공식 방식, CUDA arch 수동 지정)
-# A10 / 30xx / 40xx 대충 커버하는 아키텍처 세트
-ENV TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6"
+# ----------------------------------------------------------
+# 4) Unique3D pinned deps (onnxruntime*, torch_scatter, pytorch3d 제외)
+# ----------------------------------------------------------
+RUN python -m pip install --no-cache-dir \
+    accelerate==0.29.2 \
+    datasets==2.18.0 \
+    diffusers==0.27.2 \
+    fire==0.6.0 \
+    gradio==4.32.0 \
+    jaxtyping==0.2.29 \
+    numba==0.59.1 \
+    numpy==1.26.4 \
+    nvdiffrast==0.3.1 \
+    omegaconf==2.3.0 \
+    opencv_python==4.9.0.80 \
+    opencv_python_headless==4.9.0.80 \
+    peft==0.10.0 \
+    Pillow==10.3.0 \
+    pygltflib==1.16.2 \
+    pymeshlab==2023.12.post1 \
+    rembg==2.0.56 \
+    tqdm==4.64.1 \
+    transformers==4.39.3 \
+    trimesh==4.3.0 \
+    typeguard==2.13.3 \
+    wandb==0.16.6
 
-RUN TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}" \
-    pip install --no-build-isolation --no-cache-dir \
-    "git+https://github.com/NVlabs/nvdiffrast.git"
+# ----------------------------------------------------------
+# 5) ONNX Runtime (문서 그대로: CUDA12 인덱스 사용 / CPU onnxruntime 설치 금지)
+# ----------------------------------------------------------
+RUN python -m pip install --no-cache-dir \
+    ort_nightly_gpu==1.17.0.dev20240118002 \
+    --index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/ort-cuda-12-nightly/pypi/simple/ \
+ && python -m pip install --no-cache-dir \
+    onnxruntime_gpu==1.17.0 \
+    --index-url https://pkgs.dev.azure.com/onnxruntime/onnxruntime/_packaging/onnxruntime-cuda-12/pypi/simple/
 
+# ----------------------------------------------------------
+# 6) TensorRT (문서 그대로)
+# ----------------------------------------------------------
+RUN python -m pip install --no-cache-dir tensorrt==8.6.0
 
-# 4-2 pytorch3d (v0.7.8: PyTorch 2.1~2.4 공식 지원)
-# 4-2 pytorch3d (V0.7.8: PyTorch 2.1~2.4 공식 지원)
-RUN pip install --no-cache-dir \
-    "git+https://github.com/facebookresearch/pytorch3d.git@V0.7.8"
+# 문서의 .bashrc 대신, 컨테이너 환경변수로 고정 (런타임 컨테이너에서도 상속되게)
+# (site-packages 경로는 배포마다 달라질 수 있어 흔한 후보들을 같이 넣음)
+ENV LD_LIBRARY_PATH=/usr/local/cuda/targets/x86_64-linux/lib/:/usr/local/lib/python3.10/dist-packages/tensorrt:/usr/lib/python3/dist-packages/tensorrt:${LD_LIBRARY_PATH}
 
+# ----------------------------------------------------------
+# 7) torch_scatter (prebuilt wheel)
+# ----------------------------------------------------------
+RUN python -m pip install --no-cache-dir \
+    "torch_scatter==2.1.2" \
+    -f https://data.pyg.org/whl/torch-2.1.0+cu121.html
 
-# 4-3 torch_scatter (PyTorch 2.4.x + cu118 호환 wheel)
-RUN pip install --no-cache-dir \
-    torch_scatter \
-    -f https://data.pyg.org/whl/torch-2.4.0+cu118.html
+# ----------------------------------------------------------
+# 8) pytorch3d (문서 그대로: prebuilt wheel / 버전스트링 계산)
+#    - heredoc 없이 안전하게: URL을 python으로 계산 → 쉘 변수로 받아 pip -f
+# ----------------------------------------------------------
+RUN python -m pip install --no-cache-dir fvcore iopath \
+ && P3D_URL="$(python -c "import sys, torch; \
+pyt=torch.__version__.split('+')[0].replace('.',''); \
+v=''.join([f'py3{sys.version_info.minor}_cu', torch.version.cuda.replace('.',''), f'_pyt{pyt}']); \
+print(f'https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/{v}/download.html')")" \
+ && echo "pytorch3d wheel url: ${P3D_URL}" \
+ && python -m pip install --no-index --no-cache-dir pytorch3d==0.7.5 -f "${P3D_URL}"
 
-
-CMD ["bash"]
+# ----------------------------------------------------------
+# 9) sanity
+# ----------------------------------------------------------
+RUN python -c "import diffusers, peft; print('diffusers', diffusers.__version__, 'peft', peft.__version__)" \
+ && python -c "import onnxruntime as ort; print('onnxruntime', ort.__version__, 'providers', ort.get_available_providers())" || true
