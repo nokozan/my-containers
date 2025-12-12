@@ -57,31 +57,34 @@ RUN pip install --no-cache-dir \
 # ----------------------------------------------------------
 RUN pip install --no-cache-dir \
         accelerate==0.29.2 \
-        datasets \
-        "diffusers>=0.26.3" \
-        fire \
-        gradio \
-        jaxtyping \
-        numba \
-        numpy \
-        "omegaconf>=2.3.0" \
-        onnxruntime-gpu \
-        opencv-python \
-        opencv-python-headless \
-        ort_nightly_gpu \
-        peft \
-        Pillow \
-        pygltflib \
-        "pymeshlab>=2023.12" \
-        "rembg[gpu]" \
-        tqdm \
-        transformers \
-        trimesh \
-        typeguard \
-        wandb \
+        datasets==2.18.0 \
+        diffusers==0.27.2 \
+        fire==0.6.0 \
+        gradio==4.32.0 \
+        jaxtyping==0.2.29 \
+        numba==0.59.1 \
+        numpy==1.26.4 \
+        nvdiffrast==0.3.1 \
+        omegaconf==2.3.0 \
+        onnxruntime-gpu==1.17.0 \
+        opencv-python==4.9.0.80 \
+        opencv-python-headless==4.9.0.80 \
+        ort_nightly_gpu==1.17.0.dev20240118002 \
+        peft==0.10.0 \
+        Pillow==10.3.0 \
+        pygltflib==1.16.2 \
+        pymeshlab==2023.12.post1 \
+        rembg==2.0.56 \
+        torch_scatter==2.1.2 \
+        tqdm==4.64.1 \
+        transformers==4.39.3 \
+        trimesh==4.3.0 \
+        typeguard==2.13.3 \
+        wandb==0.16.6 \
         xformers \
         ninja \
         huggingface-hub
+
 
 
 # ----------------------------------------------------------
