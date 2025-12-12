@@ -115,3 +115,5 @@ print(f'https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/{v}/download.h
 # ----------------------------------------------------------
 RUN python -c "import diffusers, peft; print('diffusers', diffusers.__version__, 'peft', peft.__version__)" \
  && python -c "import onnxruntime as ort; print('onnxruntime', ort.__version__, 'providers', ort.get_available_providers())" || true
+
+RUN python -m pip install --no-cache-dir --upgrade --force-reinstall "huggingface_hub==0.20.3"
