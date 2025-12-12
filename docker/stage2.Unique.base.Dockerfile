@@ -80,7 +80,7 @@ RUN python -m pip install --no-cache-dir \
     --index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/ort-cuda-12-nightly/pypi/simple/ \
  && python -m pip install --no-cache-dir \
     onnxruntime-gpu==1.17.0 \
-    --index-url https://pkgs.dev.azure.com/onnxruntime/onnxruntime/_packaging/onnxruntime-cuda-12/pypi/simple/
+    --extra-index-url https://pkgs.dev.azure.com/onnxruntime/onnxruntime/_packaging/onnxruntime-cuda-12/pypi/simple/
 
 # ----------------------------------------------------------
 # 6) TensorRT (문서 그대로)
