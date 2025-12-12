@@ -79,7 +79,7 @@ RUN python -m pip install --no-cache-dir \
     ort_nightly_gpu==1.17.0.dev20240118002 \
     --index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/ort-cuda-12-nightly/pypi/simple/ \
  && python -m pip install --no-cache-dir \
-    onnxruntime_gpu==1.17.0 \
+    onnxruntime-gpu==1.17.0 \
     --index-url https://pkgs.dev.azure.com/onnxruntime/onnxruntime/_packaging/onnxruntime-cuda-12/pypi/simple/
 
 # ----------------------------------------------------------
