@@ -15,15 +15,29 @@ ENV DEBIAN_FRONTEND=noninteractive \
     TORCH_HOME=/runpod-volume/.cache/torch \
     TMPDIR=/runpod-volume/tmp
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git wget curl ca-certificates \
-    python3 python3-pip python3-dev \
-    build-essential pkg-config cmake ninja-build \
-    ffmpeg \
-    libgl1-mesa-glx libglib2.0-0 \
-    libx11-6 libxcb1 libxext6 libxrender1 \
-    libegl1 libegl1-mesa \
-    && rm -rf /var/lib/apt/lists/*
+# 1) dpkg가 꼬였을 때 복구 루틴(안전장치)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends dpkg && \
+    dpkg --configure -a || true
+
+# 2) ca-certificates를 먼저 단독 설치 + 갱신 (여기서 많이 터짐)
+RUN apt-get update --fix-missing && \
+    apt-get install -y --no-install-recommends --fix-missing ca-certificates && \
+    update-ca-certificates || true
+
+
+# 3) 나머지 패키지 설치 (python3-pip도 여기서)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      git wget curl \
+      python3 python3-dev python3-venv python3-pip \
+      build-essential pkg-config cmake ninja-build \
+      ffmpeg \
+      libgl1-mesa-glx libglib2.0-0 \
+      libx11-6 libxcb1 libxext6 libxrender1 \
+      libegl1 libegl1-mesa && \
+    rm -rf /var/lib/apt/lists/*
+
 
 RUN python3 -m pip install --upgrade pip setuptools wheel
 
