@@ -17,7 +17,19 @@ ENV DEBIAN_FRONTEND=noninteractive \
     TORCH_HOME=/runpod-volume/.cache/torch \
     TMPDIR=/runpod-volume/tmp
 
+
 # ---- APT: dpkg 꼬임 복구 + CA 먼저 안정화 ----
+    # ---- APT: dpkg 꼬임 복구 + CA 먼저 안정화 ----
+RUN set -eux; \
+    export TMPDIR=/tmp; \
+    dpkg --configure -a || true; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends openssl ca-certificates; \
+    apt-get -f install -y; \
+    dpkg --configure -a; \
+    update-ca-certificates; \
+    rm -rf /var/lib/apt/lists/*
+
 RUN set -eux; \
     dpkg --configure -a || true; \
     apt-get update; \
