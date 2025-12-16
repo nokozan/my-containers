@@ -1,37 +1,4 @@
-# stage2-texpipe.base.Dockerfile
-# GH Actions: target: runtime 로 푸시
-
-# -----------------------------------------
-# STAGE A: build nvdiffrast (torch 포함 + CUDA toolkit)
-# -----------------------------------------
-FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-devel AS build
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-ENV DEBIAN_FRONTEND=noninteractive \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    TMPDIR=/tmp \
-    CUDA_HOME=/usr/local/cuda
-
-RUN set -eux; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends \
-      ca-certificates openssl \
-      git curl \
-      build-essential ninja-build cmake pkg-config; \
-    update-ca-certificates; \
-    rm -rf /var/lib/apt/lists/*
-
-# nvdiffrast (torch는 이미 이미지에 포함되어 있음)
-RUN set -eux; \
-    python -m pip install --upgrade pip setuptools wheel; \
-    pip install --no-cache-dir \
-      git+https://github.com/NVlabs/nvdiffrast.git --no-build-isolation
-
-# -----------------------------------------
-# STAGE B: runtime (final)
-# -----------------------------------------
-FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime AS runtime
+FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -43,7 +10,6 @@ RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
       ca-certificates openssl \
-      git curl wget \
       ffmpeg \
       libgl1 libglib2.0-0 \
       libx11-6 libxcb1 libxext6 libxrender1 \
@@ -51,10 +17,6 @@ RUN set -eux; \
     update-ca-certificates; \
     rm -rf /var/lib/apt/lists/*
 
-# nvdiffrast 복사 (conda site-packages)
-COPY --from=build /opt/conda/lib/python3.10/site-packages /opt/conda/lib/python3.10/site-packages
-
-# texpipe deps
 RUN set -eux; \
     python -m pip install --upgrade pip setuptools wheel; \
     pip install --no-cache-dir \
@@ -68,11 +30,13 @@ RUN set -eux; \
       trimesh xatlas==0.0.9 imageio[ffmpeg] \
       runpod boto3
 
-# smoke
+# wheel만 설치 (컴파일 없음)
+# 빌드 컨텍스트에 wheels/nvdiffrast-*.whl 이 들어있어야 함
+COPY wheels/nvdiffrast-*.whl /tmp/
 RUN set -eux; \
-    python -c "import torch; print('torch', torch.__version__, 'cuda', torch.cuda.is_available())"; \
-    python -c "import nvdiffrast; print('nvdiffrast ok')"; \
-    python -c "import scipy, diffusers, transformers, trimesh, xatlas; print('deps ok')"
+    pip install --no-cache-dir /tmp/nvdiffrast-*.whl; \
+    python -c "import torch; import nvdiffrast; import scipy; print('OK')"; \
+    rm -f /tmp/nvdiffrast-*.whl
 
 WORKDIR /app
 CMD ["bash"]
