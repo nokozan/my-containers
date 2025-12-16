@@ -1,45 +1,46 @@
-name: Build stage2 base Texture pipe image
-
+name: build-texpipe
 on:
   workflow_dispatch:
 
 jobs:
-  build-and-push-stage2-base:
+  build:
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       packages: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # 1) 디스크 확보 (이거 없으면 CUDA/PyTorch에서 터짐)
+      # 디스크 확보(필수)
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android
           sudo apt-get clean
           docker system prune -af || true
-          df -h
 
-      # 2) Docker Buildx (멀티스테이지 + target 필수)
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      # nvdiffrast wheel을 어디선가 가져와서 wheels/에 둔다
+      # 방법 A: repo에 올려둔 릴리즈 asset에서 다운로드
+      # 방법 B: artifact 저장소에서 curl/wget로 다운로드
+      - name: Fetch nvdiffrast wheel
+        run: |
+          mkdir -p wheels
+          # 예시: 리포에 직접 넣지 말고, 너가 올린 wheel URL로 받기
+          # curl -L "https://github.com/nokozan/my-containers/releases/download/v0.1/nvdiffrast-0.4.0-cp310-cp310-linux_x86_64.whl" -o wheels/nvdiffrast.whl
+          # 파일명이 와일드카드 COPY에 맞게:
+          ls -lh wheels
 
-      - name: Login to GHCR
+      - name: Login GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_PAT }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3) runtime stage만 빌드/푸시 (build stage 포함하면 용량 초과)
-      - name: Build & Push stage2 texpipe base (runtime only)
-        uses: docker/build-push-action@v5
+      - name: Build and push (runtime only)
+        uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/stage2-texpipe.base.Dockerfile
-          target: runtime
+          file: stage2-texpipe.base.Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/aue-stage2-base-texpipe:cuda118-py310
+          tags: ghcr.io/nokozan/aue-stage2-base-texpipe:cuda118-py310

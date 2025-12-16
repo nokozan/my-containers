@@ -16,7 +16,12 @@ docker run --rm -t \
 
     git clone --depth 1 https://github.com/NVlabs/nvdiffrast.git /tmp/nvdiffrast
     cd /tmp/nvdiffrast
+    python -m pip install -U pip setuptools wheel
+    python -m pip install -U packaging "pybind11<3"
 
+    export TORCH_CUDA_ARCH_LIST="8.0+PTX"
+    export CUDA_HOME=/usr/local/cuda
+    export MAX_JOBS=1
     # wheel 생성
     python -m pip wheel . -w /dist --no-build-isolation
   '
