@@ -39,7 +39,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: stage2-texpipe.base.Dockerfile
+          file: docker/stage2-texpipe.base.Dockerfile
           push: true
           tags: ghcr.io/nokozan/aue-stage2-base-texpipe:cuda118-py310
           provenance: false
