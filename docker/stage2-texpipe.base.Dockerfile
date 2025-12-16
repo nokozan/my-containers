@@ -1,7 +1,6 @@
 # ghcr.io/nokozan/aue-stage2-base-texpipe:cuda118-py310
 # 목적: "텍스처 생성/베이크" 전용 베이스. TripoSR/Unique3D 절대 포함 금지.
-
-FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
