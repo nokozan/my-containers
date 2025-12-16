@@ -44,6 +44,21 @@ RUN set -eux; \
       runpod \
       boto3
 
+      # ---- 필수: scipy ----
+RUN set -eux; \
+    pip install --no-cache-dir scipy
+
+# ---- 필수: nvdiffrast (빌드에 필요한 최소 툴) ----
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+      ninja-build \
+      build-essential \
+      git; \
+    rm -rf /var/lib/apt/lists/*; \
+    pip install --no-cache-dir \
+      git+https://github.com/NVlabs/nvdiffrast.git --no-build-isolation
+
 # 빌드 시점 스모크 테스트(여기서 터지면 런타임도 100% 터짐)
 RUN set -eux; \
     python -c "import torch; print('torch', torch.__version__, 'cuda', torch.cuda.is_available())"; \
