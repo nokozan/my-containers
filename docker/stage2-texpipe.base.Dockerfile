@@ -13,29 +13,42 @@ ENV DEBIAN_FRONTEND=noninteractive \
     XDG_CACHE_HOME=/runpod-volume/.cache \
     TORCH_HOME=/runpod-volume/.cache/torch \
     TMPDIR=/runpod-volume/tmp
+ENV DEBIAN_FRONTEND=noninteractive
 
-# 1) dpkg가 꼬였을 때 복구 루틴(안전장치)
+# 0) dpkg 복구 안전장치
+RUN dpkg --configure -a || true
+
+# 1) openssl 먼저 (ca-certificates postinst가 여기서 자주 터짐)
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends dpkg && \
-    dpkg --configure -a || true
+    apt-get install -y --no-install-recommends openssl && \
+    rm -rf /var/lib/apt/lists/*
 
-# 2) ca-certificates를 먼저 단독 설치 + 갱신 (여기서 많이 터짐)
-RUN apt-get update --fix-missing && \
-    apt-get install -y --no-install-recommends --fix-missing ca-certificates && \
-    update-ca-certificates || true
+# 2) ca-certificates는 단독 설치 + 강제 구성
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    update-ca-certificates && \
+    dpkg --configure -a && \
+    rm -rf /var/lib/apt/lists/*
 
-
-# 3) 나머지 패키지 설치 (python3-pip도 여기서)
+# 3) 나머지 설치: 여기서 python3-pip / python3-venv “패키지”는 설치하지만 pip는 설치하지 않는다
+#    -> python3-venv는 필요(venv 생성), pip는 get-pip로 해결
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       git wget curl \
-      python3 python3-dev python3-venv python3-pip \
+      python3 python3-dev python3-venv \
       build-essential pkg-config cmake ninja-build \
       ffmpeg \
-      libgl1-mesa-glx libglib2.0-0 \
+      libgl1 libglib2.0-0 \
       libx11-6 libxcb1 libxext6 libxrender1 \
       libegl1 libegl1-mesa && \
+    dpkg --configure -a && \
     rm -rf /var/lib/apt/lists/*
+
+# 4) pip는 get-pip로 설치 (apt의 python3-pip / *-pip-whl 완전 배제)
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
+    python3 /tmp/get-pip.py && \
+    python3 -m pip install --upgrade pip setuptools wheel && \
+    rm -f /tmp/get-pip.py
 
 
 RUN python3 -m pip install --upgrade pip setuptools wheel
