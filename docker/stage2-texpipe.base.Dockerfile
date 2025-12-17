@@ -42,5 +42,36 @@ RUN pip install --no-cache-dir \
     torchvision==0.18.1+cu118 \
     --index-url https://download.pytorch.org/whl/cu118
 
+
+# ---- BUILD-TIME SMOKE TEST (의존성 검증) ----
+RUN python - <<'PY'
+import torch
+import torchvision
+print("torch:", torch.__version__)
+print("torchvision:", torchvision.__version__)
+assert torch.version.cuda == "11.8"
+assert torch.cuda.is_available()
+
+import diffusers, transformers, accelerate, safetensors
+import numpy, scipy, PIL, cv2
+import trimesh, xatlas, imageio
+import boto3, runpod
+import nvdiffrast
+print("basic imports: OK")
+
+# nvdiffrast CUDA 커널 실제 호출 (아주 작게)
+import nvdiffrast.torch as dr
+glctx = dr.RasterizeCudaContext()
+pos = torch.tensor([[
+    [-0.5, -0.5, 0.5, 1.0],
+    [ 0.5, -0.5, 0.5, 1.0],
+    [ 0.0,  0.5, 0.5, 1.0],
+]], device="cuda")
+tri = torch.tensor([[0,1,2]], device="cuda", dtype=torch.int32)
+rast, _ = dr.rasterize(glctx, pos, tri, resolution=[16,16])
+print("nvdiffrast raster: OK")
+PY
+
+
 WORKDIR /app
 CMD ["bash"]
