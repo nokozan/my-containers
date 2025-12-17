@@ -38,5 +38,9 @@ RUN set -eux; \
     python -c "import torch; import nvdiffrast; import scipy; print('OK')"; \
     rm -f /tmp/nvdiffrast-*.whl
 
+RUN pip install --no-cache-dir \
+    torchvision==0.18.1+cu118 \
+    --index-url https://download.pytorch.org/whl/cu118
+
 WORKDIR /app
 CMD ["bash"]
