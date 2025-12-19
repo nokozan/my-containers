@@ -27,9 +27,16 @@ RUN python3.10 -m pip install --no-cache-dir \
   pytorch3d \
   -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu118_pyt211/download.html
 
-# nvdiffrast: GLIBC mismatch 피하려면 "같은 컨테이너에서 빌드"가 가장 안전함
-RUN python3.10 -m pip install --no-cache-dir \
-    git+https://github.com/NVlabs/nvdiffrast.git
+# wheel만 설치 (컴파일 없음)
+# 빌드 컨텍스트에 wheels/nvdiffrast-*.whl 이 들어있어야 함
+COPY wheels/nvdiffrast-*.whl /tmp/
+RUN set -eux; \
+    pip install --no-cache-dir /tmp/nvdiffrast-*.whl; \
+    python -c "import torch; import nvdiffrast; import scipy; print('OK')"; \
+    rm -f /tmp/nvdiffrast-*.whl
+
+
+RUN pip install --no-cache-dir nvdiffrast
 
 
 ENV DEBIAN_FRONTEND=noninteractive \
