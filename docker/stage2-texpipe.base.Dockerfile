@@ -31,7 +31,7 @@ RUN python3.10 -m pip install --no-cache-dir \
 # 빌드 컨텍스트에 wheels/nvdiffrast-*.whl 이 들어있어야 함
 COPY wheels/nvdiffrast-*.whl /tmp/
 RUN set -eux; \
-    pip install --no-cache-dir /tmp/nvdiffrast-*.whl; \
+    python3.10 -m pip install --no-cache-dir /tmp/nvdiffrast-*.whl;\
     python3.10 -c "import torch; import nvdiffrast; import scipy; print('OK')"; \
     rm -f /tmp/nvdiffrast-*.whl
 
