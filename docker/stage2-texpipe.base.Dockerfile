@@ -1,5 +1,9 @@
-FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime
+# FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime
+FROM pytorch/pytorch:2.1.1-cuda11.8-cudnn8-runtime
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+
+
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -49,7 +53,9 @@ RUN pip install --no-cache-dir pyrender
 
 
 
-
+RUN pip install --no-cache-dir \
+    pytorch3d \
+    -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu118_pyt211/download.html
 
 WORKDIR /app
 CMD ["bash"]
