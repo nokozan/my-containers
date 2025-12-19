@@ -3,6 +3,14 @@ FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 
+RUN pip install --no-cache-dir --force-reinstall \
+    torch==2.1.1+cu118 \
+    torchvision==0.16.1+cu118 \
+    torchaudio==2.1.1+cu118 \
+    --index-url https://download.pytorch.org/whl/cu118
+RUN pip install --no-cache-dir \
+    pytorch3d \
+    -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu118_pyt211/download.html
 
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -42,9 +50,9 @@ RUN set -eux; \
     python -c "import torch; import nvdiffrast; import scipy; print('OK')"; \
     rm -f /tmp/nvdiffrast-*.whl
 
-RUN pip install --no-cache-dir \
-    torchvision==0.18.1+cu118 \
-    --index-url https://download.pytorch.org/whl/cu118
+# RUN pip install --no-cache-dir \
+#     torchvision==0.18.1+cu118 \
+#     --index-url https://download.pytorch.org/whl/cu118
 
 
 RUN pip install --no-cache-dir nvdiffrast
@@ -53,9 +61,6 @@ RUN pip install --no-cache-dir pyrender
 
 
 
-RUN pip install --no-cache-dir \
-    pytorch3d \
-    -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu118_pyt211/download.html
 
 WORKDIR /app
 CMD ["bash"]
