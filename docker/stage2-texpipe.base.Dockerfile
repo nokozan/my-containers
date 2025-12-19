@@ -32,7 +32,7 @@ RUN python3.10 -m pip install --no-cache-dir \
 COPY wheels/nvdiffrast-*.whl /tmp/
 RUN set -eux; \
     pip install --no-cache-dir /tmp/nvdiffrast-*.whl; \
-    python -c "import torch; import nvdiffrast; import scipy; print('OK')"; \
+    python3.10 -c "import torch; import nvdiffrast; import scipy; print('OK')"; \
     rm -f /tmp/nvdiffrast-*.whl
 
 
