@@ -13,17 +13,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN python3.10 -m pip install --upgrade pip setuptools wheel
 
-# PyTorch CUDA 11.8 (pip wheel)
 RUN python3.10 -m pip install --no-cache-dir \
-    torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 \
-    --index-url https://download.pytorch.org/whl/cu118
+  torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 \
+  --index-url https://download.pytorch.org/whl/cu118
 
 # Your deps (필요한 것만 유지/추가)
 RUN python3.10 -m pip install --no-cache-dir \
     numpy pillow opencv-python-headless \
     boto3 \
-    pytorch3d \
     pyrender
+    
+RUN python3.10 -m pip install --no-cache-dir \
+  pytorch3d \
+  -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu118_pyt211/download.html
 
 # nvdiffrast: GLIBC mismatch 피하려면 "같은 컨테이너에서 빌드"가 가장 안전함
 RUN python3.10 -m pip install --no-cache-dir \
