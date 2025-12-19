@@ -35,7 +35,7 @@ RUN set -eux; \
     python3.10 -c "import torch; import nvdiffrast; import scipy; print('OK')"; \
     rm -f /tmp/nvdiffrast-*.whl
 
-
+RUN ln -sf /usr/bin/python3.10 /usr/local/bin/python
 RUN pip install --no-cache-dir nvdiffrast
 
 
