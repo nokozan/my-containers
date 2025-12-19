@@ -43,6 +43,12 @@ RUN pip install --no-cache-dir \
     --index-url https://download.pytorch.org/whl/cu118
 
 
+RUN pip install --no-cache-dir nvdiffrast
+
+RUN pip install --no-cache-dir pyrender
+
+
+
 
 
 WORKDIR /app
