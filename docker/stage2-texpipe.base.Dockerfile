@@ -1,16 +1,33 @@
-# FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime
-FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
 
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /app
 
-RUN pip install --no-cache-dir --force-reinstall \
-    torch==2.1.1+cu118 \
-    torchvision==0.16.1+cu118 \
-    torchaudio==2.1.1+cu118 \
+# OS deps (python + build toolchain)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.10 python3.10-dev python3-pip \
+    git ca-certificates curl \
+    build-essential cmake ninja-build pkg-config \
+    libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3.10 -m pip install --upgrade pip setuptools wheel
+
+# PyTorch CUDA 11.8 (pip wheel)
+RUN python3.10 -m pip install --no-cache-dir \
+    torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 \
     --index-url https://download.pytorch.org/whl/cu118
-RUN pip install --no-cache-dir \
+
+# Your deps (필요한 것만 유지/추가)
+RUN python3.10 -m pip install --no-cache-dir \
+    numpy pillow opencv-python-headless \
+    boto3 \
     pytorch3d \
-    -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu118_pyt211/download.html
+    pyrender
+
+# nvdiffrast: GLIBC mismatch 피하려면 "같은 컨테이너에서 빌드"가 가장 안전함
+RUN python3.10 -m pip install --no-cache-dir \
+    git+https://github.com/NVlabs/nvdiffrast.git
 
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -42,22 +59,6 @@ RUN set -eux; \
       trimesh xatlas==0.0.9 imageio[ffmpeg] \
       runpod boto3
 
-# wheel만 설치 (컴파일 없음)
-# 빌드 컨텍스트에 wheels/nvdiffrast-*.whl 이 들어있어야 함
-COPY wheels/nvdiffrast-*.whl /tmp/
-RUN set -eux; \
-    pip install --no-cache-dir /tmp/nvdiffrast-*.whl; \
-    python -c "import torch; import nvdiffrast; import scipy; print('OK')"; \
-    rm -f /tmp/nvdiffrast-*.whl
-
-# RUN pip install --no-cache-dir \
-#     torchvision==0.18.1+cu118 \
-#     --index-url https://download.pytorch.org/whl/cu118
-
-
-RUN pip install --no-cache-dir nvdiffrast
-
-RUN pip install --no-cache-dir pyrender
 
 
 
