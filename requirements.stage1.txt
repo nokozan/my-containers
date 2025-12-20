@@ -1,16 +1,11 @@
-# Stable Diffusion 파이프라인
-diffusers
-transformers
-accelerate
-safetensors
 
-# 이미지 처리
-Pillow
-opencv-python-headless
-
-# 배경 제거 (필요하면 나중에 모델 교체)
-rembg
-
-# 유틸
-numpy
-tqdm
+# pymeshlab
+diffusers>=0.30.0
+transformers>=4.40.0
+accelerate>=0.29.0
+safetensors>=0.4.2
+sentencepiece
+huggingface_hub
+pillow
+rembg[gpu]
+xformers

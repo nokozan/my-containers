@@ -1,0 +1,28 @@
+name: Build stage1 SD base image
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-push-stage1-base:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build stage1 sd base image
+        run: |
+          docker build -f docker/stage1-sd.base.Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/aue-stage1-base-sd:cuda118-py310 .
+
+      - name: Push stage1 sd base image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/aue-stage1-base-sd:cuda118-py310
