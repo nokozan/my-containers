@@ -1,4 +1,4 @@
-name: Build stage2 base Unique image
+name: Build stage2 base trellis image
 
 on:
   workflow_dispatch:
@@ -18,11 +18,11 @@ jobs:
       - name: Login to GHCR
         run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Build stage2 base Unique image
+      - name: Build stage2 base trellis image
         run: |
-          docker build -f docker/stage2.Unique.base.Dockerfile \
-            -t ghcr.io/${{ github.repository_owner }}/aue-stage2-base-unique:cuda118-py310 .
+          docker build -f docker/stage2.trellis.base.Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:cuda118-py310 .
 
-      - name: Push stage2 base image
+      - name: Push stage2 base trellis image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/aue-stage2-base-unique:cuda118-py310
+          docker push ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:cuda118-py310
