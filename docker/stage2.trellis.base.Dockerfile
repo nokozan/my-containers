@@ -1,5 +1,5 @@
 # docker/stage2.trellis.base.Dockerfile
-FROM ghcr.io/nokozan/aue-stage2-trellis-torch-base:cuda118-py310
+FROM ghcr.io/nokozan/aue-stage2-torch-base-trellis:cuda118-py310
 
 SHELL ["/bin/bash", "-lc"]
 
