@@ -7,6 +7,9 @@ SHELL ["/bin/bash", "-lc"]
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git ca-certificates curl wget \
     build-essential cmake ninja-build pkg-config \
+    # FIX: open3d가 런타임에 필요로 하는 X11/GL 런타임 라이브러리
+    libx11-6 libxext6 libxrender1 \
+    libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 # TRELLIS 공식 repo
