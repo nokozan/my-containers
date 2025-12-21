@@ -29,6 +29,10 @@ RUN git clone --recurse-submodules https://github.com/microsoft/TRELLIS.git
 WORKDIR /opt/TRELLIS
 
 # FIX(한 줄 근거): setup.sh 공식 옵션(--new-env)이 conda env  torch/cu118  basic(rembg/open3d 포함)까지 책임지도록 함 :contentReference[oaicite:3]{index=3}
+# FIX(한 줄 근거): conda가 업데이트/프롬프트를 띄우면서 빌드가 멈추는 걸 방지 (non-interactive)
+ENV CONDA_ALWAYS_YES=true
+RUN conda config --system --set always_yes yes
+
 RUN source ${CONDA_DIR}/etc/profile.d/conda.sh && \
     bash ./setup.sh --new-env --basic --xformers --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast
 
