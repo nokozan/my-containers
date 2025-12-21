@@ -24,26 +24,11 @@ jobs:
       - name: Login to GHCR
         run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/stage2.trellis.base.Dockerfile
-          push: true
-          tags:
-            ghcr.io/${{ github.repository_owner }}/aue-stage2-trellis-base:cu118-py310
-            # FIX: 레지스트리 캐시 사용(다음 빌드에서 다운로드/레이어 재사용, 디스크/시간 절약)
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/aue-stage2-trellis-base:buildcache
-          cache-to:
-            type=registry,ref=ghcr.io/${{ github.repository_owner }}/aue-stage2-trellis-base:buildcache,mode=max
-            # FIX: 추가 산출물 끄기(디스크/시간 절약)
-          provenance: false
-          sbom: false
-      # - name: Build stage2 base trellis image
-      #   run: |
-      #     docker build -f docker/stage2.trellis.base.Dockerfile \
-      #       -t ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:cuda118-py310 .
+      - name: Build stage2 base trellis image
+        run: |
+          docker build -f docker/stage2.trellis.base.Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:cuda118-py310 .
 
-      # - name: Push stage2 base trellis image
-      #   run: |
-      #     docker push ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:cuda118-py310
+      - name: Push stage2 base trellis image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:cuda118-py310
