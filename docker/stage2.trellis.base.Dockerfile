@@ -21,24 +21,22 @@ RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-py310_24.7.1-0-Linux-
     rm -f /tmp/miniconda.sh
 ENV PATH="${CONDA_DIR}/bin:${PATH}"
 
-# conda activate가 동작하도록 bash login shell 사용
+ENV CONDA_ALWAYS_YES=true
+RUN conda config --system --set always_yes yes
+
+# conda pkgs 캐시가 /opt/conda/pkgs에 쌓여 No space 나는 걸 방지
+ENV CONDA_PKGS_DIRS=/tmp/conda-pkgs
+
 SHELL ["/bin/bash", "-lc"]
-# 4) TRELLIS clone (submodule 포함)
+
 WORKDIR /opt
 RUN git clone --recurse-submodules https://github.com/microsoft/TRELLIS.git
 WORKDIR /opt/TRELLIS
 
-# FIX(한 줄 근거): setup.sh 공식 옵션(--new-env)이 conda env  torch/cu118  basic(rembg/open3d 포함)까지 책임지도록 함 :contentReference[oaicite:3]{index=3}
-# FIX(한 줄 근거): conda가 업데이트/프롬프트를 띄우면서 빌드가 멈추는 걸 방지 (non-interactive)
-ENV CONDA_ALWAYS_YES=true
-RUN conda config --system --set always_yes yes
-
-# FIX(한 줄 근거): pip 진행상태를 강제로 출력해서 "멈춤/진행"을 로그에서 확실히 구분
-ENV PIP_DEFAULT_TIMEOUT=300
-ENV PIP_PROGRESS_BAR=on
-
 RUN source ${CONDA_DIR}/etc/profile.d/conda.sh && \
-    bash ./setup.sh --new-env --basic --xformers --flash-attn --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast
+    bash ./setup.sh --new-env --basic --xformers --flash-attn --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast && \
+    conda clean -a -y && \
+    rm -rf /tmp/conda-pkgs
 
 # setup.sh가 만든 conda env를 런타임 기본 python/pip로 고정
 ENV PATH="${CONDA_DIR}/envs/trellis/bin:${PATH}"
