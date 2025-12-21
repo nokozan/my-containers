@@ -1,6 +1,6 @@
 # trellis.base.Dockerfile
 # 목적: GHCR에서 빌드(무거운 설치/컴파일) 완료 -> RunPod에서는 pull만.
-FROM pytorch/pytorch:2.4.0-cuda11.8-cudnn8-devel AS nvdiffrast_wheel
+FROM pytorch/pytorch:2.4.0-cuda11.9-cudnn8-devel AS nvdiffrast_wheel
 
 ARG ARCH_LIST=8.0PTX
 RUN set -eux; \
