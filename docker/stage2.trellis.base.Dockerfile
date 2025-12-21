@@ -13,40 +13,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-# 2) venv
-ENV VENV=/opt/venv
-RUN python3 -m venv ${VENV}
-ENV PATH="${VENV}/bin:${PATH}"
-RUN pip install --upgrade pip setuptools wheel
+# FIX(한 줄 근거): setup.sh의 --new-env는 conda 전제(공식 플로우). conda를 이미지에 추가해서 setup.sh가 의도대로 동작하게 함 :contentReference[oaicite:1]{index=1}
+# 2) Miniconda 설치
+ENV CONDA_DIR=/opt/conda
+RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-py310_24.7.1-0-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+    bash /tmp/miniconda.sh -b -p ${CONDA_DIR} && \
+    rm -f /tmp/miniconda.sh
+ENV PATH="${CONDA_DIR}/bin:${PATH}"
 
-# 3) PyTorch (CUDA 11.8)
-# (PyTorch 설치 URL은 종종 바뀔 수 있어, 실제로는 torch 공식 가이드에 맞춰 조정 권장)
-RUN pip install --no-cache-dir torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu118
-
+# conda activate가 동작하도록 bash login shell 사용
+SHELL ["/bin/bash", "-lc"]
 # 4) TRELLIS clone (submodule 포함)
 WORKDIR /opt
 RUN git clone --recurse-submodules https://github.com/microsoft/TRELLIS.git
 WORKDIR /opt/TRELLIS
 
-# 5) 기본 런타임 deps (xformers 우선)
-# RUN pip install --no-cache-dir xformers
-# reason: xformers 단독 설치가 torch==2.9.x + cu12 패키지까지 끌어와서 디스크 터짐을 방지
-# (1) torch를 cu118로 먼저 고정 설치
-RUN pip install --no-cache-dir \
-  --index-url https://download.pytorch.org/whl/cu118 \
-  torch==2.4.0 torchvision==0.19.0
+# FIX(한 줄 근거): setup.sh 공식 옵션(--new-env)이 conda env  torch/cu118  basic(rembg/open3d 포함)까지 책임지도록 함 :contentReference[oaicite:3]{index=3}
+RUN source ${CONDA_DIR}/etc/profile.d/conda.sh && \
+    bash ./setup.sh --new-env --basic --xformers --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast
 
-# (2) 이후 xformers는 deps 해석 금지(= torch 업그레이드/쿠다12 끌어오기 차단)
-RUN pip install --no-cache-dir --no-deps xformers==0.0.27.post2
+# setup.sh가 만든 conda env를 런타임 기본 python/pip로 고정
+ENV PATH="${CONDA_DIR}/envs/trellis/bin:${PATH}"
 
-# 6) TRELLIS setup.sh 기반 설치
-# 공식은 conda 환경 생성도 지원하지만, 여기서는 venv에 설치하려고 --new-env 없이 필요한 것만 맞춘다.
-# setup.sh는 내부적으로 여러 컴포넌트 설치를 관리함. :contentReference[oaicite:5]{index=5}
-# RUN bash -lc ". ./setup.sh --basic --xformers --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast"
-
-# FIX(한 줄 근거): login shell(-l)로 PATH가 흔들려 pip가 venv가 아닌 시스템에 설치되는 케이스를 차단
-RUN bash ./setup.sh --basic --xformers --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast
- 
 # FIX(한 줄 근거): 빌드 시점에 바로 검증해서 런타임에서 터지지 않게 함
 RUN python -c "import rembg, open3d; print('ok: rembg/open3d')"
  
