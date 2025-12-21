@@ -1,4 +1,4 @@
-name: build-stage2-trellis-torch-base
+name: build-stage2-trellis-base
 
 on:
   workflow_dispatch:
@@ -39,7 +39,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/stage2.trellis.torch.base.Dockerfile
+          file: docker/stage2.trellis.base.Dockerfile
           push: true
-          tags: ghcr.io/nokozan/aue-stage2-torch-base-trellis:cuda118-py310
+          tags: ghcr.io/nokozan/aue-stage2-trellis-base:cuda118-py310
           provenance: false
