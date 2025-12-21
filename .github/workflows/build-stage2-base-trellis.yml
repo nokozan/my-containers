@@ -13,22 +13,50 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses:
+          actions/checkout@v4
 
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
-      #   with:
-      #     # FIX: 빌드 중 로컬 레이어를 덜 쌓게 하고 GC 유도(러너 디스크 압박 완화)
-      #     buildkitd-flags: --debug --oci-worker-gc --oci-worker-gc-keepstorage=12GB
+          # FIX: BuildKit content store가 꼬이거나(또는 디스크 압박) layer commit에서 rename 오류 나는 케이스 방지
+      - name: Hard reset Docker / BuildKit storage
+        shell: bash
+        run: |
+          set -euxo pipefail
+          df -h
+          sudo docker system prune -af || true
+          sudo docker builder prune -af || true
+          # buildkit content store 강제 삭제 (깨진 ingest/blobs 정리)
+          sudo rm -rf /var/lib/docker/buildkit || true
+          sudo rm -rf /var/lib/docker/overlay2 || true
+          sudo systemctl restart docker
+          # 도커 올라왔는지 확인
+          docker info
+          df -h
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-flags: --debug --oci-worker-gc --oci-worker-gc-keepstorage=10GB
 
       - name: Login to GHCR
         run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Build stage2 base trellis image
-        run: |
-          docker build -f docker/stage2.trellis.base.Dockerfile \
-            -t ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:cuda118-py310 .
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/stage2.trellis.base.Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:cuda118-py310
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:buildcache,mode=max
+          provenance: false
+          sbom: false
 
-      - name: Push stage2 base trellis image
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:cuda118-py310
+      # - name: Build stage2 base trellis image
+      #   run: |
+      #     docker build -f docker/stage2.trellis.base.Dockerfile \
+      #       -t ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:cuda118-py310 .
+
+      # - name: Push stage2 base trellis image
+      #   run: |
+      #     docker push ghcr.io/${{ github.repository_owner }}/aue-stage2-base-trellis:cuda118-py310
