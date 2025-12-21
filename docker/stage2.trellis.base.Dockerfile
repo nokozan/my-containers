@@ -38,7 +38,7 @@ ENV PIP_DEFAULT_TIMEOUT=300
 ENV PIP_PROGRESS_BAR=on
 
 RUN source ${CONDA_DIR}/etc/profile.d/conda.sh && \
-    bash ./setup.sh --new-env --basic --xformers --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast
+    bash ./setup.sh --new-env --basic --xformers --flash-attn --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast
 
 # setup.sh가 만든 conda env를 런타임 기본 python/pip로 고정
 ENV PATH="${CONDA_DIR}/envs/trellis/bin:${PATH}"
