@@ -43,9 +43,10 @@ RUN pip install --no-cache-dir --no-deps xformers==0.0.27.post2
 # 공식은 conda 환경 생성도 지원하지만, 여기서는 venv에 설치하려고 --new-env 없이 필요한 것만 맞춘다.
 # setup.sh는 내부적으로 여러 컴포넌트 설치를 관리함. :contentReference[oaicite:5]{index=5}
 # RUN bash -lc ". ./setup.sh --basic --xformers --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast"
-# FIX(한 줄 근거): setup.sh를 "실행"으로 호출해서 --basic 플래그에 포함된 rembg/open3d 설치가 실제로 반영되게 함
-RUN bash -lc "bash ./setup.sh --basic --xformers --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast"
 
+# FIX(한 줄 근거): login shell(-l)로 PATH가 흔들려 pip가 venv가 아닌 시스템에 설치되는 케이스를 차단
+RUN bash ./setup.sh --basic --xformers --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast
+ 
 # FIX(한 줄 근거): 빌드 시점에 바로 검증해서 런타임에서 터지지 않게 함
 RUN python -c "import rembg, open3d; print('ok: rembg/open3d')"
  
