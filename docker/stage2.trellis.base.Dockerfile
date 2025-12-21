@@ -1,34 +1,40 @@
-# docker/stage2.trellis.base.fromtorch.Dockerfile
-# 목적: 위 torch 베이스를 FROM으로 사용해서,
-#       TRELLIS는 setup.sh를 --new-env 없이 돌리고 나머지 의존성만 설치한다.
+# docker/stage2.trellis.base.Dockerfile
+FROM ghcr.io/nokozan/aue-stage2-trellis-torch-base:cuda118-py310
 
-FROM ghcr.io/nokozan/aue-stage2-torch-base-trellis:cuda118-py310
+SHELL ["/bin/bash", "-lc"]
 
-ARG DEBIAN_FRONTEND=noninteractive
-
-# TRELLIS 빌드에 필요한 OS deps (setup.sh에서 쓰는 것들 최소)
+# OS deps (setup.sh에서 빌드 필요한 것들 대비)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git ca-certificates curl wget \
     build-essential cmake ninja-build pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# (선택) pip 업그레이드
-RUN python -m pip install -U pip setuptools wheel
-
-# TRELLIS clone
+# TRELLIS 공식 repo
 WORKDIR /opt
-RUN git clone --recurse-submodules https://github.com/microsoft/TRELLIS.git
+RUN git clone --recursive https://github.com/microsoft/TRELLIS.git /opt/TRELLIS
 WORKDIR /opt/TRELLIS
 
-# setup.sh는 conda env를 새로 만들지 말고(=--new-env 금지),
-# 현재 env(=trellis)에 필요한 컴포넌트만 설치한다.
-# NOTE: flags는 너가 지금 쓰는 조합 유지
-RUN bash ./setup.sh --basic --xformers --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast
+# ✅ 로컬에서 만들어 둔 nvdiffrast wheel만 사용 (git clone 금지)
+COPY wheels/nvdiffrast-*.whl /tmp/wheels/
+RUN python -m pip install --no-cache-dir /tmp/wheels/nvdiffrast-*.whl && rm -rf /tmp/wheels
 
-# 설치 후 conda/pip 캐시 정리(이미 torch 베이스에서 대부분 정리됨)
-RUN conda clean -a -y || true
+# ✅ setup.sh는 "공식 그대로" 실행
+#    - --new-env ❌ (conda/torch 재설치 때문에 용량/ABI 터짐)
+#    - --nvdiffrast ❌ (git clone 강제라서 wheel 전략과 충돌)
+RUN chmod +x ./setup.sh && \
+    . ./setup.sh \
+      --basic \
+      --xformers \
+      --flash-attn \
+      --diffoctreerast \
+      --spconv \
+      --mipgaussian \
+      --kaolin
 
-# 빌드 검증(예제들이 요구하는 모듈)
-RUN python -c "import torch; import rembg, open3d; print('ok: torch/rembg/open3d')"
+# 검증 (빌드 단계에서 터지게)
+RUN python -c "import nvdiffrast.torch as dr; print('ok: nvdiffrast')" && \
+    python -c "import rembg, open3d; print('ok: rembg/open3d')"
 
-CMD ["bash"]
+# RunPod 규칙
+WORKDIR /opt
+CMD ["python", "-u", "handler.py"]
