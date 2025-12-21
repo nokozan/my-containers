@@ -33,6 +33,10 @@ WORKDIR /opt/TRELLIS
 ENV CONDA_ALWAYS_YES=true
 RUN conda config --system --set always_yes yes
 
+# FIX(한 줄 근거): pip 진행상태를 강제로 출력해서 "멈춤/진행"을 로그에서 확실히 구분
+ENV PIP_DEFAULT_TIMEOUT=300
+ENV PIP_PROGRESS_BAR=on
+
 RUN source ${CONDA_DIR}/etc/profile.d/conda.sh && \
     bash ./setup.sh --new-env --basic --xformers --diffoctreerast --spconv --mipgaussian --kaolin --nvdiffrast
 
