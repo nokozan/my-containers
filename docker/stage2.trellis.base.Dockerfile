@@ -58,7 +58,9 @@ RUN python -m pip install --no-cache-dir --no-build-isolation flash-attn==2.7.0.
 # (E) diffoctreerast: 소스 설치(빌드 타임 1회, 이미지에 bake)
 RUN rm -rf /tmp/extensions && mkdir -p /tmp/extensions && \
     git clone --recurse-submodules https://github.com/JeffreyXiang/diffoctreerast.git /tmp/extensions/diffoctreerast && \
-    python -m pip install --no-cache-dir /tmp/extensions/diffoctreerast
+    python -c "import torch; print('torch ok', torch.__version__)" && \
+    python -m pip install --no-cache-dir --no-build-isolation /tmp/extensions/diffoctreerast
+
 
 # (F) mipgaussian: 소스 설치(= setup.sh가 하던 방식 그대로, 단 조건문 없이)
 RUN rm -rf /tmp/extensions && mkdir -p /tmp/extensions && \
