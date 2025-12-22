@@ -52,7 +52,8 @@ RUN python -m pip install --no-cache-dir \
 
 # (D) flash-attn: 가능하면 버전 고정(커뮤니티에서 많이 쓰는 조합)
 # devel 이미지라 nvcc 있어 빌드도 가능. 휠이 있으면 휠로 깔리고 없으면 소스빌드.
-RUN python -m pip install --no-cache-dir flash-attn==2.7.0.post2
+RUN python -c "import torch; print('torch ok', torch.__version__)"
+RUN python -m pip install --no-cache-dir --no-build-isolation flash-attn==2.7.0.post2
 
 # (E) diffoctreerast: 소스 설치(빌드 타임 1회, 이미지에 bake)
 RUN rm -rf /tmp/extensions && mkdir -p /tmp/extensions && \
