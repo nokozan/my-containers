@@ -66,10 +66,14 @@ RUN rm -rf /tmp/extensions && mkdir -p /tmp/extensions && \
 
 
 # (F) mipgaussian: 소스 설치(= setup.sh가 하던 방식 그대로, 단 조건문 없이)
-RUN rm -rf /tmp/extensions && mkdir -p /tmp/extensions && \
+RUN export TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9+PTX" && \
+    rm -rf /tmp/extensions && mkdir -p /tmp/extensions && \
     git clone https://github.com/autonomousvision/mip-splatting.git /tmp/extensions/mip-splatting && \
-    python -m pip install --no-cache-dir /tmp/extensions/mip-splatting/submodules/diff-gaussian-rasterization/
+    python -c "import torch; print('torch ok', torch.__version__)" && \
+    python -m pip install --no-cache-dir --no-build-isolation \
+      /tmp/extensions/mip-splatting/submodules/diff-gaussian-rasterization/
 
+RUN python -c "import diff_gaussian_rasterization as dgr; print('ok: diff_gaussian_rasterization')"
 
 # 검증 (빌드 단계에서 터지게)
 RUN python -c "import nvdiffrast.torch as dr; print('ok: nvdiffrast')" && \
