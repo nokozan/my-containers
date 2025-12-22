@@ -56,6 +56,9 @@ RUN python -c "import torch; print('torch ok', torch.__version__)"
 RUN python -m pip install --no-cache-dir --no-build-isolation flash-attn==2.7.0.post2
 
 # (E) diffoctreerast: 소스 설치(빌드 타임 1회, 이미지에 bake)
+# 빌드 환경(GHCR)에는 GPU가 없으므로, 타겟 아키텍처를 직접 지정해야 함
+ENV TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9+PTX"
+
 RUN rm -rf /tmp/extensions && mkdir -p /tmp/extensions && \
     git clone --recurse-submodules https://github.com/JeffreyXiang/diffoctreerast.git /tmp/extensions/diffoctreerast && \
     python -c "import torch; print('torch ok', torch.__version__)" && \
